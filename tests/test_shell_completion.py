@@ -888,3 +888,204 @@ def test_powershell_format_completion_escapes_help():
     # produced by ZshComplete.
     item = CompletionItem("--at")
     assert pc.format_completion(item) == "plain\n--at\n_"
+
+
+@pytest.mark.parametrize(
+    ("shell", "words", "cword"),
+    [
+        ("bash", "gobble -c=al", 1),
+        ("bash", "gobble -c = al", 3),
+        ("bash", "gobble -c=", 1),
+        ("zsh", "gobble -c=al", 1),
+        ("zsh", "gobble -c=", 1),
+    ],
+)
+def test_short_option_value_is_not_split_at_equals(runner, shell, words, cword):
+    """Like the parser, a short option is not split from a value at ``=``.
+    The value of ``-c=al`` is ``=al``, so it isn't completed to a value.
+    """
+
+    @click.command()
+    @click.option("-c", "--color", type=Choice(["auto", "always", "never"]))
+    def cli(color):
+        pass
+
+    output = _shell_complete_output(runner, cli, shell, words, cword)
+    assert output.splitlines() == [""]
+
+
+def test_short_option_value_after_equals_resolves_command():
+    cli = _equals_cli()
+    assert _get_words(cli, [], "-c=al") == []
+    assert _get_words(cli, [], "--color=al") == ["always"]
+
+
+@pytest.mark.parametrize(
+    ("line", "expect"),
+    [
+        ("", [""]),
+        ("prog", ["prog"]),
+        ("prog ", ["prog", ""]),
+        ("prog  --a=b   c", ["prog", "--a=b", "c"]),
+        ("prog --a= ", ["prog", "--a=", ""]),
+        ("prog 'a b' \"c d", ["prog", "a b", "c d"]),
+        ("prog a\\ b c\\", ["prog", "a b", "c"]),
+        ('prog "x\\$y\\"\\a" \'\\\'', ["prog", 'x$y"\\a', "\\"]),
+        ("prog a\\\nb", ["prog", "ab"]),
+        ("prog ''", ["prog", ""]),
+    ],
+)
+def test_split_shell_words(line, expect):
+    assert click.shell_completion._split_shell_words(line) == expect
+
+
+def _bash_line_output(runner, cli, words, cword, line, point=None):
+    result = runner.invoke(
+        cli,
+        prog_name="gobble",
+        env={
+            "_GOBBLE_COMPLETE": "bash_complete",
+            "COMP_WORDS": words,
+            "COMP_CWORD": str(cword),
+            "COMP_LINE": line,
+            "COMP_POINT": str(len(line) if point is None else point),
+        },
+    )
+    assert result.exit_code == 0, result.output
+    return result.output.splitlines()
+
+
+def test_bash_space_after_equals_completes_argument(runner):
+    """A space after ``--name=`` ends the option's value, the next word is
+    an argument. Bash reports the line, so the empty value is known.
+    """
+
+    @click.command()
+    @click.option("-c", "--color", type=Choice(["auto", "always", "never"]))
+    @click.argument("target", type=Choice(["target"]), required=False)
+    def cli(color, target):
+        pass
+
+    output = _bash_line_output(runner, cli, "gobble --color = ", 3, "gobble --color= ")
+    assert output == ["plain,target"]
+
+
+@pytest.mark.parametrize(
+    ("words", "cword", "line", "expect"),
+    [
+        # Bash splits a separate value at "=" too, and replaces only "b".
+        ("gobble --env FOO = b", 4, "gobble --env FOO=b", ["bar"]),
+        ("gobble --env FOO =", 3, "gobble --env FOO=", ["bar"]),
+        ("gobble --env = FOO = b", 5, "gobble --env=FOO=b", ["bar"]),
+        ("gobble --env F", 2, "gobble --env F", ["FOO=bar"]),
+        ("gobble --env 'F", 2, "gobble --env 'F", ["FOO=bar"]),
+    ],
+)
+def test_bash_separate_value_containing_equals(runner, words, cword, line, expect):
+    @click.command()
+    @click.option("--env", type=Choice(["FOO=bar", "BAZ=qux"]))
+    def cli(env):
+        pass
+
+    output = _bash_line_output(runner, cli, words, cword, line)
+    assert output == [f"plain,{value}" for value in expect]
+
+
+def test_bash_line_before_cursor(runner):
+    """Only the line before the cursor is used."""
+    output = _bash_line_output(
+        runner, _equals_cli(), "gobble --color = al", 3, "gobble --color=al x", 17
+    )
+    assert output == ["plain,always"]
+
+
+@pytest.mark.parametrize(
+    ("line", "point"),
+    [
+        # A line that doesn't match the words is ignored.
+        ("other --color= ", None),
+        ("gobble --color= ", 100),
+        ("gobble --color= ", "x"),
+    ],
+)
+def test_bash_inconsistent_line_falls_back_to_words(runner, line, point):
+    result = runner.invoke(
+        _equals_cli(),
+        prog_name="gobble",
+        env={
+            "_GOBBLE_COMPLETE": "bash_complete",
+            "COMP_WORDS": "gobble --color = al",
+            "COMP_CWORD": "3",
+            "COMP_LINE": line,
+            "COMP_POINT": str(len(line) if point is None else point),
+        },
+    )
+    assert result.output.splitlines() == ["plain,always"]
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="requires Bash")
+@pytest.mark.parametrize(
+    ("current", "expect"),
+    [
+        ("v", ["x\\$y", "a\\`b\\`", "it\\'s", 'say\\ \\"hi\\"', "back\\\\slash"]),
+        ('"v', ["x\\$y", "a\\`b\\`", "it's", 'say \\"hi\\"', "back\\\\slash"]),
+        ("'v", ["x$y", "a`b`", "it'\\''s", 'say "hi"', "back\\slash"]),
+    ],
+)
+@pytest.mark.usefixtures("_patch_for_completion")
+def test_bash_script_escapes_for_open_quote(runner, current, expect):
+    """A reply is escaped for the quote that the word was opened with, so
+    the command receives exactly the value.
+    """
+    result = runner.invoke(
+        _equals_cli(), prog_name="gobble", env={"_GOBBLE_COMPLETE": "bash_source"}
+    )
+    values = ["x$y", "a`b`", "it's", 'say "hi"', "back\\slash"]
+    quote = current[0] if current[0] in "'\"" else ""
+    script = (
+        f"{result.output}\n"
+        # Answer as the program would, without running it.
+        f"env() {{ printf 'plain,%s\\n' {shlex.join(values)}; }}\n"
+        f"COMP_WORDS=(gobble --name {shlex.quote(current)}); COMP_CWORD=2\n"
+        "_gobble_completion gobble\n"
+        'printf "%s\\n" "${COMPREPLY[@]}"\n'
+        # The shell reads each reply back as the value.
+        f"q={shlex.quote(quote)}\n"
+        'for r in "${COMPREPLY[@]}"; do eval "printf \'%s\\n\' $q$r$q"; done\n'
+    )
+    completed = subprocess.run(
+        [shutil.which("bash"), "--norc", "--noprofile", "-c", script],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    assert completed.stdout.splitlines() == [*expect, *values]
+
+
+@pytest.mark.usefixtures("_patch_for_completion")
+def test_bash_script_passes_line(runner):
+    result = runner.invoke(
+        _equals_cli(), prog_name="gobble", env={"_GOBBLE_COMPLETE": "bash_source"}
+    )
+    assert 'COMP_LINE="$COMP_LINE" COMP_POINT="$COMP_POINT"' in result.output
+
+
+def test_zsh_path_after_equals_keeps_value(runner):
+    """Zsh completes the path after ``--out=``, the program returns only the
+    path part. The script moves the ``--out=`` prefix out of the way.
+    """
+
+    @click.command()
+    @click.option("--out", type=Path())
+    @click.option("--env", type=Path())
+    def cli(out, env):
+        pass
+
+    output = _shell_complete_output(runner, cli, "zsh", "gobble --env=FOO=b", 1)
+    assert output.splitlines() == ["file", "FOO=b", "_"]
+    output = _shell_complete_output(runner, cli, "zsh", "gobble --out=", 1)
+    assert output.splitlines() == ["file", "", "_"]
+    source = click.shell_completion.ZshComplete(cli, {}, "gobble", "_G").source()
+    assert "compset -P 1 '*='" in source
+    assert 'in "${response[@]}"' in source
