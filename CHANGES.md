@@ -47,6 +47,11 @@ Unreleased
   {attr}`Context.default_map` value while resolving the context. The parameter's
   value is `None` during completion. Literal defaults and values given on the
   command line are still available. {issue}`2614`
+- Bash and Zsh shell completion complete an option value given as
+  `--name=value`, and keep the option name. Bash splits the word at `=`, and
+  Zsh replaces the whole word. The Bash completion script escapes inserted
+  values, so a value with spaces or other special characters is passed as one
+  argument. {issue}`2847`
 - A command's short help no longer stops at an abbreviation such as `vs.` or `e.g.`
   inside the first sentence. A period ends the sentence only when it closes the text
   or the next word does not start in lowercase. {pr}`3865`

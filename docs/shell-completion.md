@@ -18,6 +18,17 @@ $ repo clone -<TAB><TAB>
 --deep  --help  --rev  --shallow  -r
 ```
 
+An option's value is completed whether it is separated from the option name by a space or by `=`. In the `=` form,
+Bash and Zsh keep the option name in front of the completed value. Bash inserts values escaped, so a value with spaces
+or other special characters is passed to the command as one argument.
+
+```console
+$ repo clone --rev=ma<TAB>
+$ repo clone --rev=main
+```
+
+If you saved the Bash completion script to a file, generate it again to get the escaping.
+
 ## Enabling Completion
 
 Completion is only available if a script is installed and invoked through an entry point, not through the `python`
