@@ -596,6 +596,85 @@ def test_files_closed(tmp_path) -> None:
         assert not current_warnings, "There should be no warnings after either"
 
 
+@pytest.mark.parametrize("from_map", [False, True])
+def test_completion_does_not_call_callable_default(runner, from_map):
+    """Resolving the context for completion doesn't call a callable default,
+    from either the parameter or the default map. Ordinary invocation still
+    calls it once. https://github.com/pallets/click/issues/2614
+    """
+    calls = []
+
+    def default():
+        calls.append("called")
+        return "calculated"
+
+    def complete(ctx, param, incomplete):
+        source = ctx.get_parameter_source("name")
+        return [f"{ctx.params['name']}:{source.name}"]
+
+    @click.command(
+        context_settings={"default_map": {"name": default}} if from_map else {}
+    )
+    @click.option("--name", default=None if from_map else default)
+    @click.option("--color", shell_complete=complete)
+    def cli(name, color):
+        click.echo(name)
+
+    expect_source = "DEFAULT_MAP" if from_map else "DEFAULT"
+    assert _get_words(cli, ["--color"], "") == [f"None:{expect_source}"]
+    assert _get_words(cli, [], "--") == ["--name", "--color", "--help"]
+    assert calls == []
+
+    result = runner.invoke(cli, ["--color", "red"])
+    assert result.exit_code == 0, result.output
+    assert result.output == "calculated\n"
+    assert calls == ["called"]
+
+
+@pytest.mark.parametrize(
+    ("args", "default_map", "expect"),
+    [
+        ([], None, "literal:DEFAULT"),
+        ([], {"name": "mapped"}, "mapped:DEFAULT_MAP"),
+        (["--name", "explicit"], None, "explicit:COMMANDLINE"),
+        (["--name", "explicit"], {"name": lambda: "x"}, "explicit:COMMANDLINE"),
+    ],
+)
+def test_completion_keeps_literal_and_explicit_values(args, default_map, expect):
+    """Literal defaults, literal default map values and parsed values still
+    populate the completion context.
+    """
+
+    def complete(ctx, param, incomplete):
+        source = ctx.get_parameter_source("name")
+        return [f"{ctx.params['name']}:{source.name}"]
+
+    @click.command(context_settings={"default_map": default_map})
+    @click.option("--name", default="literal")
+    @click.option("--color", shell_complete=complete)
+    def cli(name, color):
+        pass
+
+    assert _get_words(cli, [*args, "--color"], "") == [expect]
+
+
+def test_completion_keeps_callable_flag_value():
+    """A callable flag value used as a flag's default is a literal value, not a
+    callable default, so completion still exposes it uncalled.
+    """
+
+    def complete(ctx, param, incomplete):
+        return [ctx.params["upper"].__name__]
+
+    @click.command()
+    @click.option("--upper", "upper", flag_value=str.upper, default=True)
+    @click.option("--color", shell_complete=complete)
+    def cli(upper, color):
+        pass
+
+    assert _get_words(cli, ["--color"], "") == ["upper"]
+
+
 def test_fish_format_completion_escapes_help():
     fc = FishComplete(Command("x"), {}, "x", "_X_COMPLETE")
     item = CompletionItem("--at", help="first\nsecond\tthird")

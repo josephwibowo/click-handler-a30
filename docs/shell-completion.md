@@ -175,6 +175,10 @@ function is used instead of any completion provided by the type. It is passed 3 
 
 It must return a list of {class}`CompletionItem` objects, or as a shortcut it can return a list of strings.
 
+The context is parsed from the words entered so far, so `ctx.params` holds values given on the command line, from
+environment variables, and from literal defaults or {attr}`~Context.default_map` values. A default that is a callable is
+not called during completion, because it may be slow or have side effects, so that parameter's value is `None`.
+
 In this example, the command will suggest environment variables that start with the incomplete value.
 
 ```python

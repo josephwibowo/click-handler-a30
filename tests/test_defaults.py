@@ -565,3 +565,34 @@ def test_unset_in_default_map(runner):
     result = runner.invoke(cli, [])
     assert result.exit_code == 0
     assert result.output.strip() == "port=8000"
+
+
+@pytest.mark.parametrize("from_map", [False, True])
+def test_resilient_parsing_does_not_call_callable_default(from_map):
+    """Resilient parsing, as used by shell completion, leaves a callable default
+    unevaluated and treats its value as missing.
+
+    Refs: https://github.com/pallets/click/issues/2614
+    """
+    calls = []
+
+    def default():
+        calls.append("called")
+        return "calculated"
+
+    @click.command()
+    @click.option("--name", default=None if from_map else default)
+    @click.option("--count", default=1)
+    def cli(name, count):
+        pass
+
+    default_map = {"name": default} if from_map else None
+    ctx = cli.make_context("cli", [], resilient_parsing=True, default_map=default_map)
+    assert calls == []
+    assert ctx.params == {"name": None, "count": 1}
+    expect = ParameterSource.DEFAULT_MAP if from_map else ParameterSource.DEFAULT
+    assert ctx.get_parameter_source("name") is expect
+
+    ctx = cli.make_context("cli", [], default_map=default_map)
+    assert calls == ["called"]
+    assert ctx.params == {"name": "calculated", "count": 1}
