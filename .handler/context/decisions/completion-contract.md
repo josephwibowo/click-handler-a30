@@ -27,7 +27,8 @@ objective allowance for planning, challenge, independent assurance and repair.
 A real failure must take the recorded repair route. If none occurs, delivery can
 succeed but the A-30 repair requirement remains unproved. Never sabotage a candidate.
 
-Source/test/docs scope is the approved named paths. Policy, CI, protected acceptance,
+Source/test/docs scope is the approved named paths. Every task must retain the
+approved negative protected-path exclusions in its writable-path expression. Policy, CI, protected acceptance,
 lockfile and package configuration stay operator-owned. Required provider checks
 run the upstream suite and each contribution's new regressions. Protected acceptance
 lives separately in acceptance/ because both contributions are required to pass it.
