@@ -179,8 +179,76 @@ The prose in this file is explanatory; machine-read declarations use typed fence
         "working_directory": ""
       }
     ],
+    "name": "click-composed-feature",
+    "profile_id": "424fbea366381a85eb87fe8434be635314ba5870b936f97df569df15ee9f9884"
+  }
+}
+```
+
+```handler:surface
+{
+  "globs": [
+    "src/click/core.py",
+    "src/click/shell_completion.py",
+    "tests/test_shell_completion.py",
+    "tests/test_defaults.py",
+    "tests/test_context.py",
+    "tests/test_parser.py",
+    "docs/shell-completion.md",
+    "CHANGES.md"
+  ],
+  "level": "standard",
+  "profile": {
+    "commands": [
+      {
+        "argv": [
+          "/home/openhands/spike-native-venv/bin/python",
+          "ci/check_objective.py",
+          "integrated"
+        ],
+        "artifacts": [
+          "reports/integrated/junit.xml"
+        ],
+        "expects": "junit_xml",
+        "working_directory": ""
+      }
+    ],
     "name": "click-integrated",
     "profile_id": "c616929cd0e89580e10d70fd4221159cfd07d94f8751f0b724507e54388cc179"
+  }
+}
+```
+
+```handler:surface
+{
+  "globs": [
+    "src/click/core.py",
+    "src/click/shell_completion.py",
+    "tests/test_shell_completion.py",
+    "tests/test_defaults.py",
+    "tests/test_context.py",
+    "tests/test_parser.py",
+    "docs/shell-completion.md",
+    "CHANGES.md"
+  ],
+  "level": "standard",
+  "profile": {
+    "commands": [
+      {
+        "argv": [
+          "/home/openhands/spike-native-venv/bin/python",
+          "ci/check_objective.py",
+          "negative"
+        ],
+        "artifacts": [
+          "reports/negative/junit.xml"
+        ],
+        "expects": "junit_xml",
+        "working_directory": ""
+      }
+    ],
+    "name": "click-negative",
+    "profile_id": "5e633a1ea11791577e316a860742078d5fcef79490c5ba2589968f3075c95723"
   }
 }
 ```

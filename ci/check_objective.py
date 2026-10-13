@@ -12,7 +12,7 @@ from pathlib import Path
 def main(argv: Sequence[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "mode", choices=["upstream", "defaults", "equals", "integrated"]
+        "mode", choices=["upstream", "defaults", "equals", "integrated", "negative"]
     )
     args = parser.parse_args(argv)
     root = Path(__file__).resolve().parents[1]
@@ -38,6 +38,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "acceptance/test_completion_integrated.py",
         ],
         "integrated": ["acceptance"],
+        "negative": ["acceptance/test_negative_inputs.py"],
     }[args.mode]
     output = f"reports/{args.mode}"
     (root / output).mkdir(parents=True, exist_ok=True)
