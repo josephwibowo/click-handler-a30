@@ -1,0 +1,46 @@
+name: Handler fork checks
+on:
+  pull_request:
+    branches: [main, 'handler/**']
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  upstream:
+    name: upstream-${{ matrix.python }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.13']
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+      - run: uv run --locked --python '${{ matrix.python }}' --no-default-groups --group tests pytest tests
+  static:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          persist-credentials: false
+      - uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9
+      - run: uv run --locked --python 3.13 --no-default-groups --group dev ruff check --no-fix .
+      - run: uv run --locked --python 3.13 --no-default-groups --group dev ruff format --check .
+      - run: uv run --locked --python 3.13 --no-default-groups --group typing mypy
+      - run: uv run --locked --python 3.13 --no-default-groups --group typing pyright --ignoreexternal --verifytypes click
+  handler-check:
+    if: always()
+    needs: [upstream, static]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 1
+    steps:
+      - name: Require every check to pass
+        env:
+          UPSTREAM_RESULT: ${{ needs.upstream.result }}
+          STATIC_RESULT: ${{ needs.static.result }}
+        run: test "$UPSTREAM_RESULT" = success && test "$STATIC_RESULT" = success
