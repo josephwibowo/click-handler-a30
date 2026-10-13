@@ -33,7 +33,14 @@ def _read_until(fd: int, expected: bytes, timeout: float = _TIMEOUT) -> bytes:
     raise RuntimeError(f"completion shell exceeded its bound: {output[-4096:]!r}")
 
 
-def complete_and_invoke(root: Path, shell: str, command: str) -> dict[str, object]:
+def complete_and_invoke(
+    root: Path,
+    shell: str,
+    command: str,
+    *,
+    expected: str = "always",
+    choices: tuple[str, ...] = ("auto", "always", "never"),
+) -> dict[str, object]:
     executable = shutil.which(shell)
     if executable is None:
         raise RuntimeError(f"required completion shell is absent: {shell}")
@@ -61,7 +68,7 @@ def default():
         stream.write("called\\n")
     return "calculated"
 @click.command()
-@click.option("--color", type=click.Choice(["auto", "always", "never"]))
+@click.option("--color", type=click.Choice({choices!r}))
 @click.option("--name", default=default)
 def main(color, name):
     click.echo("A30_RESULT=" + json.dumps({{"color": color, "name": name}}))
@@ -106,7 +113,7 @@ if __name__ == "__main__":
         os.write(master, setup.encode())
         transcript.extend(_read_until(master, b"\r\nA30_READY\r\n"))
         os.write(master, (command + "\t").encode())
-        transcript.extend(_read_until(master, b"always"))
+        transcript.extend(_read_until(master, expected.split()[-1].encode()))
         completion_called_default = marker.exists()
         os.write(master, b"\n")
         output = _read_until(master, b"A30> ")

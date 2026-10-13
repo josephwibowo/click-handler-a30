@@ -73,3 +73,68 @@ def test_completion_keeps_literal_and_explicit_context_values(explicit):
     )
     assert result.exit_code == 0, result.output
     assert result.output == f"plain,{'explicit' if explicit else 'literal'}\n"
+
+
+def test_completion_keeps_a_literal_default_map_and_its_parameter_source():
+    """Catch suppression of literal default-map values or their parameter source."""
+
+    def complete(ctx, param, incomplete):
+        source = ctx.get_parameter_source("name")
+        return [f"{ctx.params['name']}:{source.name}"]
+
+    @click.command()
+    @click.option("--name", default="fallback")
+    @click.option("--color", shell_complete=complete)
+    def cli(name, color):
+        click.echo(name)
+
+    result = CliRunner().invoke(
+        cli,
+        [],
+        default_map={"name": "mapped"},
+        prog_name="gobble",
+        env={
+            "_GOBBLE_COMPLETE": "bash_complete",
+            "COMP_WORDS": "gobble --color a",
+            "COMP_CWORD": "2",
+        },
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output == "plain,mapped:DEFAULT_MAP\n"
+
+
+@pytest.mark.parametrize("explicit", [False, True])
+def test_subcommand_completion_keeps_parent_context(explicit):
+    """Catch completion losing values/source from the already parsed parent."""
+
+    @click.group()
+    @click.option("--name", default="literal")
+    def group(name):
+        pass
+
+    def complete(ctx, param, incomplete):
+        parent = ctx.parent
+        source = parent.get_parameter_source("name")
+        return [f"{parent.params['name']}:{source.name}"]
+
+    @group.command()
+    @click.option("--color", shell_complete=complete)
+    def sub(color):
+        click.echo(color)
+
+    words = (
+        "gobble --name explicit sub --color a" if explicit else "gobble sub --color a"
+    )
+    result = CliRunner().invoke(
+        group,
+        [],
+        prog_name="gobble",
+        env={
+            "_GOBBLE_COMPLETE": "bash_complete",
+            "COMP_WORDS": words,
+            "COMP_CWORD": "5" if explicit else "3",
+        },
+    )
+    assert result.exit_code == 0, result.output
+    expected = "explicit:COMMANDLINE" if explicit else "literal:DEFAULT"
+    assert result.output == f"plain,{expected}\n"
