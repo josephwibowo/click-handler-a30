@@ -20,7 +20,8 @@ Run the check named by the admitted task, then the protected composed check:
 - `/home/openhands/spike-native-venv/bin/python ci/check_objective.py equals`: word-break/attached equals completion.
 - `/home/openhands/spike-native-venv/bin/python ci/check_objective.py integrated`: whole-objective independent matrix.
 - `/home/openhands/spike-native-venv/bin/python ci/check_objective.py upstream`: full upstream default tests, excluding
-  the 31,000 stress cases upstream normally deselects.
+  the 31,000 stress cases upstream normally deselects and the one case that reads
+  the literal host /tmp, which the native sandbox hides.
 
 Report real outcomes and named failures. Missing Bash >=4.4 or Zsh is a refusal,
 never a skip. Do not edit `.handler/`, `.github/`, `acceptance/`, `ci/`, pyproject

@@ -16,7 +16,10 @@ from pathlib import Path
 _TIMEOUT = 10.0
 
 
-def _read_until(fd: int, expected: bytes, timeout: float = _TIMEOUT) -> bytes:
+def _read_until(
+    fd: int, expected: bytes, timeout: float = _TIMEOUT, *, refusal: bytes | None = None
+) -> bytes:
+    """Read until ``expected`` appears, or ``refusal`` does when the shell gives one."""
     deadline = time.monotonic() + timeout
     output = bytearray()
     while time.monotonic() < deadline:
@@ -28,7 +31,7 @@ def _read_until(fd: int, expected: bytes, timeout: float = _TIMEOUT) -> bytes:
                 output.extend(os.read(fd, 65536))
             except OSError as exc:
                 raise RuntimeError("completion shell closed before its result") from exc
-            if expected in output:
+            if expected in output or (refusal is not None and refusal in output):
                 return bytes(output)
     raise RuntimeError(f"completion shell exceeded its bound: {output[-4096:]!r}")
 
@@ -104,16 +107,27 @@ if __name__ == "__main__":
     os.close(slave)
     transcript = bytearray()
     try:
+        # The sandbox's user namespace shows root-owned system completion directories
+        # as an unmapped owner, so compaudit would stop at an interactive prompt; -u
+        # loads the image's own read-only completion functions without asking.
         setup = (
-            "autoload -Uz compinit; compinit -D; PROMPT='A30> '; "
+            "autoload -Uz compinit; compinit -u -D; PROMPT='A30> '; "
             if shell == "zsh"
             else "PS1='A30> '; "
         )
-        setup += f'eval "$(_GOBBLE_COMPLETE={shell}_source gobble)"; echo A30_READY\n'
+        # The quotes keep the echoed input line from matching the marker, so the
+        # read does not depend on terminal control sequences (Bash's bracketed paste
+        # writes one between the newline and the command output).
+        setup += f'eval "$(_GOBBLE_COMPLETE={shell}_source gobble)"; echo A30_"READY"\n'
         os.write(master, setup.encode())
-        transcript.extend(_read_until(master, b"\r\nA30_READY\r\n"))
+        transcript.extend(_read_until(master, b"A30_READY\r\n"))
         os.write(master, (command + "\t").encode())
-        transcript.extend(_read_until(master, expected.split()[-1].encode()))
+        # A shell answers a Tab it cannot complete with the bell. Invoke the line as
+        # typed then, so the missing completion fails on its observed result rather
+        # than on the read bound.
+        transcript.extend(
+            _read_until(master, expected.split()[-1].encode(), refusal=b"\a")
+        )
         completion_called_default = marker.exists()
         os.write(master, b"\n")
         output = _read_until(master, b"A30> ")
