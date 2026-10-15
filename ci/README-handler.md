@@ -9,7 +9,7 @@ objective matrix runs separately after the composed candidate exists. Actions
 uses public standard runners, pinned actions, read-only repository permissions
 and no secrets. Release/nightly/lock automation stays disabled on this fork.
 
-Before approving JOS-70, the operator must bind exact runtime identities and
+Before approving JOS-71, the operator must bind exact runtime identities and
 assurance profiles, finish the whole-objective shell checks, prove the public
 fork's integration-only ruleset, and present the exact revision/delegation digest.
 The independent Bash/Zsh tests require supported real shells; absence is a refusal,

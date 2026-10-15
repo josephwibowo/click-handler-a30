@@ -71,14 +71,14 @@ The prose in this file is explanatory; machine-read declarations use typed fence
           "upstream"
         ],
         "artifacts": [
-          "reports/upstream/junit.xml"
+          "reports/upstream.xml"
         ],
         "expects": "junit_xml",
         "working_directory": ""
       }
     ],
     "name": "click-upstream",
-    "profile_id": "e6b69d65fc7849da39bfefd439c620459fa6762a75e79a92f0463a580cefbad5"
+    "profile_id": "e0580cf7fe4327b5fe14a63e69100f9ba76431dde3c754c4a992be3d9452a292"
   }
 }
 ```
@@ -105,14 +105,14 @@ The prose in this file is explanatory; machine-read declarations use typed fence
           "defaults"
         ],
         "artifacts": [
-          "reports/defaults/junit.xml"
+          "reports/defaults.xml"
         ],
         "expects": "junit_xml",
         "working_directory": ""
       }
     ],
     "name": "click-defaults",
-    "profile_id": "3141fefb3c5c2ca9c34f31488cc93bc3f4b673a29ffd83b127cd196894d87028"
+    "profile_id": "405c433e750bac08ec4c57722ccf4aebcdb453c2641b9c112b82a02247f8a2eb"
   }
 }
 ```
@@ -139,14 +139,14 @@ The prose in this file is explanatory; machine-read declarations use typed fence
           "equals"
         ],
         "artifacts": [
-          "reports/equals/junit.xml"
+          "reports/equals.xml"
         ],
         "expects": "junit_xml",
         "working_directory": ""
       }
     ],
     "name": "click-equals",
-    "profile_id": "239fd0fc3a8238dee23e0073d3bc8559809171094a92144183615be66b80870d"
+    "profile_id": "9b6ec5c71505e5fc4211041f4d5e6adc688b8b8af71b543bd059bc46e8353767"
   }
 }
 ```
@@ -173,14 +173,14 @@ The prose in this file is explanatory; machine-read declarations use typed fence
           "integrated"
         ],
         "artifacts": [
-          "reports/integrated/junit.xml"
+          "reports/integrated.xml"
         ],
         "expects": "junit_xml",
         "working_directory": ""
       }
     ],
     "name": "click-composed-feature",
-    "profile_id": "424fbea366381a85eb87fe8434be635314ba5870b936f97df569df15ee9f9884"
+    "profile_id": "1c7f2f3e772bedd14748849052eb58cda2ac0670d6ad3392e04ab73e1eb15e90"
   }
 }
 ```
@@ -207,14 +207,14 @@ The prose in this file is explanatory; machine-read declarations use typed fence
           "integrated"
         ],
         "artifacts": [
-          "reports/integrated/junit.xml"
+          "reports/integrated.xml"
         ],
         "expects": "junit_xml",
         "working_directory": ""
       }
     ],
     "name": "click-integrated",
-    "profile_id": "c616929cd0e89580e10d70fd4221159cfd07d94f8751f0b724507e54388cc179"
+    "profile_id": "a86bdfafcfc3adf891ca674f03b6ab298de10aaf1b9942da3df32be6fba41790"
   }
 }
 ```
@@ -241,14 +241,14 @@ The prose in this file is explanatory; machine-read declarations use typed fence
           "negative"
         ],
         "artifacts": [
-          "reports/negative/junit.xml"
+          "reports/negative.xml"
         ],
         "expects": "junit_xml",
         "working_directory": ""
       }
     ],
     "name": "click-negative",
-    "profile_id": "5e633a1ea11791577e316a860742078d5fcef79490c5ba2589968f3075c95723"
+    "profile_id": "7dfa285225e6767e0135f8a844f5d78567bd2f2382a08166a0cc46b4657a2dee"
   }
 }
 ```
