@@ -253,6 +253,40 @@ The prose in this file is explanatory; machine-read declarations use typed fence
 }
 ```
 
+```handler:surface
+{
+  "globs": [
+    "src/click/core.py",
+    "src/click/shell_completion.py",
+    "tests/test_shell_completion.py",
+    "tests/test_defaults.py",
+    "tests/test_context.py",
+    "tests/test_parser.py",
+    "docs/shell-completion.md",
+    "CHANGES.md"
+  ],
+  "level": "standard",
+  "profile": {
+    "commands": [
+      {
+        "argv": [
+          "/home/openhands/spike-native-venv/bin/python",
+          "ci/check_objective.py",
+          "lint"
+        ],
+        "artifacts": [
+          "reports/lint.xml"
+        ],
+        "expects": "junit_xml",
+        "working_directory": ""
+      }
+    ],
+    "name": "click-lint",
+    "profile_id": "c48c6ce12171f5bf15a902e4d23deb51279bd82ae82a1f5eb36f49926ab72503"
+  }
+}
+```
+
 ```handler:capability
 {
   "budgets": {
@@ -366,7 +400,7 @@ The prose in this file is explanatory; machine-read declarations use typed fence
   "budgets": {
     "reworks": 1,
     "tokens": 10000,
-    "wall_clock_seconds": 300
+    "wall_clock_seconds": 900
   },
   "env_allowlist": [
     "PATH"
@@ -386,7 +420,7 @@ The prose in this file is explanatory; machine-read declarations use typed fence
       "LANG": "C.UTF-8",
       "PATH": "/usr/local/bin:/usr/bin:/bin"
     },
-    "idle_timeout_seconds": 90,
+    "idle_timeout_seconds": 300,
     "image_digest": "sha256:59859aa007ee2bea2402b0259ea104d871d90e8e8c6e8788da20d3bba3f528b4",
     "max_context_bytes": 65536,
     "mcp_servers": [],
@@ -406,9 +440,9 @@ The prose in this file is explanatory; machine-read declarations use typed fence
       "read_file",
       "write_file"
     ],
-    "validation_timeout_seconds": 120,
+    "validation_timeout_seconds": 270,
     "volume_name": "handler-click-a30-native-login",
-    "wall_clock_seconds": 300,
+    "wall_clock_seconds": 900,
     "workspace_root": "/workspace/toy",
     "workspace_sdk_version": "1.53.0",
     "workspace_version": "1.53.0"
@@ -421,7 +455,7 @@ The prose in this file is explanatory; machine-read declarations use typed fence
   "budgets": {
     "reworks": 1,
     "tokens": 10000,
-    "wall_clock_seconds": 300
+    "wall_clock_seconds": 900
   },
   "env_allowlist": [
     "PATH"
@@ -441,7 +475,7 @@ The prose in this file is explanatory; machine-read declarations use typed fence
       "LANG": "C.UTF-8",
       "PATH": "/usr/local/bin:/usr/bin:/bin"
     },
-    "idle_timeout_seconds": 90,
+    "idle_timeout_seconds": 390,
     "image_digest": "sha256:59859aa007ee2bea2402b0259ea104d871d90e8e8c6e8788da20d3bba3f528b4",
     "max_context_bytes": 65536,
     "mcp_servers": [],
@@ -460,9 +494,9 @@ The prose in this file is explanatory; machine-read declarations use typed fence
       "exec_command",
       "read_file"
     ],
-    "validation_timeout_seconds": 120,
+    "validation_timeout_seconds": 360,
     "volume_name": "handler-click-a30-native-login",
-    "wall_clock_seconds": 300,
+    "wall_clock_seconds": 900,
     "workspace_root": "/workspace/toy",
     "workspace_sdk_version": "1.53.0",
     "workspace_version": "1.53.0"
