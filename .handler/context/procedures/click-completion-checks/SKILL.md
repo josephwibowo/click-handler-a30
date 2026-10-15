@@ -22,6 +22,11 @@ Run the check named by the admitted task, then the protected composed check:
 - `/home/openhands/spike-native-venv/bin/python ci/check_objective.py upstream`: full upstream default tests, excluding
   the 31,000 stress cases upstream normally deselects and the one case that reads
   the literal host /tmp, which the native sandbox hides.
+- `/home/openhands/spike-native-venv/bin/python ci/check_objective.py lint`: the required check's
+  ruff check, ruff format --check and mypy, as the workflow runs them.
+  Format the files you changed first (`/home/openhands/spike-native-venv/bin/python -m ruff
+  format --no-cache <paths>`); fix lint and type findings in the source, never with
+  configuration or ignore comments.
 
 Report real outcomes and named failures. Missing Bash >=4.4 or Zsh is a refusal,
 never a skip. Do not edit `.handler/`, `.github/`, `acceptance/`, `ci/`, pyproject
