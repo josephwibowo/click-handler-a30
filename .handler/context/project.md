@@ -90,9 +90,7 @@ review and merge remain operator actions.
     "uv.lock",
     "**/.env*",
     "**/*.pem",
-    "tests/handler_regressions/callable_defaults.json/**",
-    "tests/handler_regressions/equals_completion.json/**",
-    "tests/handler_regressions/integrated_completion.json/**"
+    "tests/handler_regressions/*.json/**"
   ]
 }
 ```
@@ -108,9 +106,7 @@ review and merge remain operator actions.
     "tests/test_parser.py",
     "docs/shell-completion.md",
     "CHANGES.md",
-    "tests/handler_regressions/callable_defaults.json",
-    "tests/handler_regressions/equals_completion.json",
-    "tests/handler_regressions/integrated_completion.json"
+    "tests/handler_regressions/*.json"
   ],
   "level": "standard",
   "profile": {
@@ -145,9 +141,7 @@ review and merge remain operator actions.
     "tests/test_parser.py",
     "docs/shell-completion.md",
     "CHANGES.md",
-    "tests/handler_regressions/callable_defaults.json",
-    "tests/handler_regressions/equals_completion.json",
-    "tests/handler_regressions/integrated_completion.json"
+    "tests/handler_regressions/*.json"
   ],
   "level": "standard",
   "profile": {
@@ -182,9 +176,7 @@ review and merge remain operator actions.
     "tests/test_parser.py",
     "docs/shell-completion.md",
     "CHANGES.md",
-    "tests/handler_regressions/callable_defaults.json",
-    "tests/handler_regressions/equals_completion.json",
-    "tests/handler_regressions/integrated_completion.json"
+    "tests/handler_regressions/*.json"
   ],
   "level": "standard",
   "profile": {
@@ -219,9 +211,7 @@ review and merge remain operator actions.
     "tests/test_parser.py",
     "docs/shell-completion.md",
     "CHANGES.md",
-    "tests/handler_regressions/callable_defaults.json",
-    "tests/handler_regressions/equals_completion.json",
-    "tests/handler_regressions/integrated_completion.json"
+    "tests/handler_regressions/*.json"
   ],
   "level": "standard",
   "profile": {
@@ -256,9 +246,7 @@ review and merge remain operator actions.
     "tests/test_parser.py",
     "docs/shell-completion.md",
     "CHANGES.md",
-    "tests/handler_regressions/callable_defaults.json",
-    "tests/handler_regressions/equals_completion.json",
-    "tests/handler_regressions/integrated_completion.json"
+    "tests/handler_regressions/*.json"
   ],
   "level": "standard",
   "profile": {
@@ -293,9 +281,7 @@ review and merge remain operator actions.
     "tests/test_parser.py",
     "docs/shell-completion.md",
     "CHANGES.md",
-    "tests/handler_regressions/callable_defaults.json",
-    "tests/handler_regressions/equals_completion.json",
-    "tests/handler_regressions/integrated_completion.json"
+    "tests/handler_regressions/*.json"
   ],
   "level": "standard",
   "profile": {
@@ -330,9 +316,7 @@ review and merge remain operator actions.
     "tests/test_parser.py",
     "docs/shell-completion.md",
     "CHANGES.md",
-    "tests/handler_regressions/callable_defaults.json",
-    "tests/handler_regressions/equals_completion.json",
-    "tests/handler_regressions/integrated_completion.json"
+    "tests/handler_regressions/*.json"
   ],
   "level": "standard",
   "profile": {
