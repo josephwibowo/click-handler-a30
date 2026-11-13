@@ -29,8 +29,8 @@ pins remain required contracts, not proof of current runtime readiness.
 The orchestrator chooses bounded actions and working-plan revisions. Investigator
 turns observe without candidate writes; assessor turns independently judge an exact
 retained submission. Only the tier-selected implementer may mutate the admitted
-candidate scope. All four use the declared native ChatGPT subscription, with the
-existing `gpt-6.1-sol` / `high` selection retained. Declarations grant nothing.
+candidate scope. All four use the operator's Claude subscription through the pinned
+Claude Code fixture, `claude-opus-5-5` / `high`. Declarations grant nothing.
 Zero-write knowledge proposal and independent review use the investigator and
 assessor profiles when supported; proposed notes gain no authority before the
 operator merges them.
@@ -354,38 +354,36 @@ review and merge remain operator actions.
   "role": "orchestrator",
   "worker_config": {
     "agent_server_version": "1.53.0",
-    "apps_enabled": false,
-    "auth_mode": "chatgpt",
+    "auth_mode": "claude_subscription",
     "cancel_grace_seconds": 8,
-    "codex_cli_version": "0.160.1",
-    "codex_sdk_version": "0.160.1",
-    "container_id": "bebde9c2182cb561f2ac1ef94013215bc0ddde82001236364362dd518e0c1c7f",
-    "endpoint": "http://127.0.0.1:55243",
+    "claude_cli_version": "2.1.322",
+    "container_id": "20ef8a5aec1c87afbfc74b14ccae14874c830b53306d885e35c3825677b921e0",
+    "endpoint": "http://127.0.0.1:55523",
     "environment": {
       "LANG": "C.UTF-8",
       "PATH": "/usr/local/bin:/usr/bin:/bin"
     },
     "idle_timeout_seconds": 90,
-    "image_digest": "sha256:59859aa007ee2bea2402b0259ea104d871d90e8e8c6e8788da20d3bba3f528b4",
+    "image_digest": "sha256:1d4e7e96509debe7b9c961e2f4c82c1e690ccec37986c112f74985c96361de87",
     "max_context_bytes": 65536,
     "mcp_servers": [],
-    "model": "gpt-6.1-sol",
-    "model_provider": "openai",
+    "model": "claude-opus-5-5",
+    "model_provider": "anthropic",
     "native_home": "/home/openhands",
     "native_python": "/home/openhands/spike-native-venv/bin/python",
-    "permission_profile": "spike",
-    "plugins_enabled": false,
-    "profile_id": "click-a30-orchestrator-v2",
+    "profile_id": "click-a30-orchestrator-claude-v1",
     "reasoning_effort": "high",
     "role": "orchestrator",
     "schema_version": 1,
     "startup_timeout_seconds": 90,
     "tools": [
-      "exec_command",
-      "read_file"
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep"
     ],
     "validation_timeout_seconds": 120,
-    "volume_name": "handler-jos42-agent-led-20261019-proof-native-login",
+    "volume_name": "handler-claude-g0-home",
     "wall_clock_seconds": 300,
     "workspace_root": "/workspace/toy",
     "workspace_sdk_version": "1.53.0",
@@ -408,38 +406,36 @@ review and merge remain operator actions.
   "role": "investigator",
   "worker_config": {
     "agent_server_version": "1.53.0",
-    "apps_enabled": false,
-    "auth_mode": "chatgpt",
+    "auth_mode": "claude_subscription",
     "cancel_grace_seconds": 8,
-    "codex_cli_version": "0.160.1",
-    "codex_sdk_version": "0.160.1",
-    "container_id": "bebde9c2182cb561f2ac1ef94013215bc0ddde82001236364362dd518e0c1c7f",
-    "endpoint": "http://127.0.0.1:55243",
+    "claude_cli_version": "2.1.322",
+    "container_id": "20ef8a5aec1c87afbfc74b14ccae14874c830b53306d885e35c3825677b921e0",
+    "endpoint": "http://127.0.0.1:55523",
     "environment": {
       "LANG": "C.UTF-8",
       "PATH": "/usr/local/bin:/usr/bin:/bin"
     },
     "idle_timeout_seconds": 90,
-    "image_digest": "sha256:59859aa007ee2bea2402b0259ea104d871d90e8e8c6e8788da20d3bba3f528b4",
+    "image_digest": "sha256:1d4e7e96509debe7b9c961e2f4c82c1e690ccec37986c112f74985c96361de87",
     "max_context_bytes": 65536,
     "mcp_servers": [],
-    "model": "gpt-6.1-sol",
-    "model_provider": "openai",
+    "model": "claude-opus-5-5",
+    "model_provider": "anthropic",
     "native_home": "/home/openhands",
     "native_python": "/home/openhands/spike-native-venv/bin/python",
-    "permission_profile": "spike",
-    "plugins_enabled": false,
-    "profile_id": "click-a30-investigator-v2",
+    "profile_id": "click-a30-investigator-claude-v1",
     "reasoning_effort": "high",
     "role": "investigator",
     "schema_version": 1,
     "startup_timeout_seconds": 90,
     "tools": [
-      "exec_command",
-      "read_file"
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep"
     ],
     "validation_timeout_seconds": 120,
-    "volume_name": "handler-jos42-agent-led-20261019-proof-native-login",
+    "volume_name": "handler-claude-g0-home",
     "wall_clock_seconds": 300,
     "workspace_root": "/workspace/toy",
     "workspace_sdk_version": "1.53.0",
@@ -462,39 +458,38 @@ review and merge remain operator actions.
   "role": "implementer",
   "worker_config": {
     "agent_server_version": "1.53.0",
-    "apps_enabled": false,
-    "auth_mode": "chatgpt",
+    "auth_mode": "claude_subscription",
     "cancel_grace_seconds": 8,
-    "codex_cli_version": "0.160.1",
-    "codex_sdk_version": "0.160.1",
-    "container_id": "bebde9c2182cb561f2ac1ef94013215bc0ddde82001236364362dd518e0c1c7f",
-    "endpoint": "http://127.0.0.1:55243",
+    "claude_cli_version": "2.1.322",
+    "container_id": "20ef8a5aec1c87afbfc74b14ccae14874c830b53306d885e35c3825677b921e0",
+    "endpoint": "http://127.0.0.1:55523",
     "environment": {
       "LANG": "C.UTF-8",
       "PATH": "/usr/local/bin:/usr/bin:/bin"
     },
     "idle_timeout_seconds": 300,
-    "image_digest": "sha256:59859aa007ee2bea2402b0259ea104d871d90e8e8c6e8788da20d3bba3f528b4",
+    "image_digest": "sha256:1d4e7e96509debe7b9c961e2f4c82c1e690ccec37986c112f74985c96361de87",
     "max_context_bytes": 65536,
     "mcp_servers": [],
-    "model": "gpt-6.1-sol",
-    "model_provider": "openai",
+    "model": "claude-opus-5-5",
+    "model_provider": "anthropic",
     "native_home": "/home/openhands",
     "native_python": "/home/openhands/spike-native-venv/bin/python",
-    "permission_profile": "spike",
-    "plugins_enabled": false,
-    "profile_id": "click-a30-implementer-v2",
+    "profile_id": "click-a30-implementer-claude-v1",
     "reasoning_effort": "high",
     "role": "implementer",
     "schema_version": 1,
     "startup_timeout_seconds": 90,
     "tools": [
-      "exec_command",
-      "read_file",
-      "write_file"
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep",
+      "Edit",
+      "Write"
     ],
     "validation_timeout_seconds": 270,
-    "volume_name": "handler-jos42-agent-led-20261019-proof-native-login",
+    "volume_name": "handler-claude-g0-home",
     "wall_clock_seconds": 900,
     "workspace_root": "/workspace/toy",
     "workspace_sdk_version": "1.53.0",
@@ -517,38 +512,36 @@ review and merge remain operator actions.
   "role": "assessor",
   "worker_config": {
     "agent_server_version": "1.53.0",
-    "apps_enabled": false,
-    "auth_mode": "chatgpt",
+    "auth_mode": "claude_subscription",
     "cancel_grace_seconds": 8,
-    "codex_cli_version": "0.160.1",
-    "codex_sdk_version": "0.160.1",
-    "container_id": "bebde9c2182cb561f2ac1ef94013215bc0ddde82001236364362dd518e0c1c7f",
-    "endpoint": "http://127.0.0.1:55243",
+    "claude_cli_version": "2.1.322",
+    "container_id": "20ef8a5aec1c87afbfc74b14ccae14874c830b53306d885e35c3825677b921e0",
+    "endpoint": "http://127.0.0.1:55523",
     "environment": {
       "LANG": "C.UTF-8",
       "PATH": "/usr/local/bin:/usr/bin:/bin"
     },
     "idle_timeout_seconds": 390,
-    "image_digest": "sha256:59859aa007ee2bea2402b0259ea104d871d90e8e8c6e8788da20d3bba3f528b4",
+    "image_digest": "sha256:1d4e7e96509debe7b9c961e2f4c82c1e690ccec37986c112f74985c96361de87",
     "max_context_bytes": 65536,
     "mcp_servers": [],
-    "model": "gpt-6.1-sol",
-    "model_provider": "openai",
+    "model": "claude-opus-5-5",
+    "model_provider": "anthropic",
     "native_home": "/home/openhands",
     "native_python": "/home/openhands/spike-native-venv/bin/python",
-    "permission_profile": "spike",
-    "plugins_enabled": false,
-    "profile_id": "click-a30-assessor-v2",
+    "profile_id": "click-a30-assessor-claude-v1",
     "reasoning_effort": "high",
     "role": "assessor",
     "schema_version": 1,
     "startup_timeout_seconds": 90,
     "tools": [
-      "exec_command",
-      "read_file"
+      "Bash",
+      "Read",
+      "Glob",
+      "Grep"
     ],
     "validation_timeout_seconds": 360,
-    "volume_name": "handler-jos42-agent-led-20261019-proof-native-login",
+    "volume_name": "handler-claude-g0-home",
     "wall_clock_seconds": 900,
     "workspace_root": "/workspace/toy",
     "workspace_sdk_version": "1.53.0",
@@ -562,7 +555,7 @@ review and merge remain operator actions.
   "tiers": [
     {
       "name": "default",
-      "profile_id": "click-a30-implementer-v2"
+      "profile_id": "click-a30-implementer-claude-v1"
     }
   ]
 }
