@@ -1,4 +1,7 @@
 import io
+import shlex
+import shutil
+import subprocess
 import textwrap
 import warnings
 from collections.abc import Mapping
@@ -673,6 +676,197 @@ def test_completion_keeps_callable_flag_value():
         pass
 
     assert _get_words(cli, ["--color"], "") == ["upper"]
+
+
+def _equals_cli(choices=("auto", "always", "never")):
+    def complete_size(ctx, param, incomplete):
+        return [f"color={ctx.params['color']}"]
+
+    @click.command()
+    @click.option("--color", type=Choice(choices))
+    @click.option("--size", shell_complete=complete_size)
+    def cli(color, size):
+        click.echo(color)
+
+    return cli
+
+
+def _shell_complete_output(runner, cli, shell, words, cword):
+    result = runner.invoke(
+        cli,
+        prog_name="gobble",
+        env={
+            "_GOBBLE_COMPLETE": f"{shell}_complete",
+            "COMP_WORDS": words,
+            "COMP_CWORD": str(cword),
+        },
+    )
+    assert result.exit_code == 0, result.output
+    return result.output
+
+
+@pytest.mark.parametrize(
+    ("words", "cword", "expect"),
+    [
+        # Bash splits at "=" in COMP_WORDBREAKS, and replaces only the value.
+        ("gobble --color = al", 3, ["always"]),
+        ("gobble --color = a", 3, ["auto", "always"]),
+        ("gobble --color = ", 3, ["auto", "always", "never"]),
+        # The cursor directly after "=" is on the "=" word, but Bash inserts
+        # after it.
+        ("gobble --color =", 2, ["auto", "always", "never"]),
+        # Without "=" in COMP_WORDBREAKS, Bash replaces the whole word.
+        ("gobble --color=al", 1, ["--color=always"]),
+        ("gobble --color=", 1, ["--color=auto", "--color=always", "--color=never"]),
+        # The space-separated form is unchanged.
+        ("gobble --color al", 2, ["always"]),
+    ],
+)
+def test_bash_completes_option_value_after_equals(runner, words, cword, expect):
+    """Bash completes a value given with ``=`` and keeps the option name.
+    https://github.com/pallets/click/issues/2847
+    """
+    output = _shell_complete_output(runner, _equals_cli(), "bash", words, cword)
+    assert output.splitlines() == [f"plain,{value}" for value in expect]
+
+
+@pytest.mark.parametrize(
+    ("words", "cword", "expect"),
+    [
+        ("gobble --color = a", 3, ["a=b", "a=c"]),
+        ("gobble --color = a =", 4, ["b", "c"]),
+        ("gobble --color = a = c", 5, ["c"]),
+        ("gobble --color=a=", 1, ["--color=a=b", "--color=a=c"]),
+    ],
+)
+def test_bash_completes_option_value_containing_equals(runner, words, cword, expect):
+    """Bash also splits an ``=`` in the value. Only the part Bash replaces is
+    returned. https://github.com/pallets/click/issues/2847
+    """
+    cli = _equals_cli(("a=b", "a=c"))
+    output = _shell_complete_output(runner, cli, "bash", words, cword)
+    assert output.splitlines() == [f"plain,{value}" for value in expect]
+
+
+@pytest.mark.parametrize(
+    ("words", "cword"),
+    [
+        ("gobble --color = always --size ", 5),
+        ("gobble --color=always --size ", 3),
+        ("gobble --color always --size ", 4),
+    ],
+)
+def test_bash_parses_complete_option_value_after_equals(runner, words, cword):
+    """An ``--name=value`` split by Bash in the complete args is parsed as
+    the option's value. https://github.com/pallets/click/issues/2847
+    """
+    output = _shell_complete_output(runner, _equals_cli(), "bash", words, cword)
+    assert output.splitlines() == ["plain,color=always"]
+
+
+def test_bash_equals_after_argument_is_unchanged(runner):
+    """An ``=`` word after a word that is not an option is not joined, it is
+    still the value of the next argument.
+    """
+
+    @click.command()
+    @click.argument("key")
+    @click.argument("value", type=Choice(["=", "x"]))
+    @click.argument("rest", type=Choice(["r"]))
+    def cli(key, value, rest):
+        pass
+
+    output = _shell_complete_output(runner, cli, "bash", "gobble key = ", 3)
+    assert output.splitlines() == ["plain,r"]
+
+
+@pytest.mark.parametrize(
+    ("words", "cword", "expect"),
+    [
+        ("gobble --color=al", 1, ["--color=always"]),
+        ("gobble --color=a", 1, ["--color=auto", "--color=always"]),
+        ("gobble --color=", 1, ["--color=auto", "--color=always", "--color=never"]),
+        ("gobble --color al", 2, ["always"]),
+        ("gobble --col", 1, ["--color"]),
+    ],
+)
+def test_zsh_completes_option_value_after_equals(runner, words, cword, expect):
+    """Zsh replaces the whole ``--name=value`` word, so the values keep the
+    option name. https://github.com/pallets/click/issues/2847
+    """
+    output = _shell_complete_output(runner, _equals_cli(), "zsh", words, cword)
+    assert output.splitlines() == [
+        line for value in expect for line in ("plain", value, "_")
+    ]
+
+
+def test_zsh_option_value_after_equals_keeps_help(runner):
+    """A value with help is prefixed before colons in it are escaped."""
+
+    def complete(ctx, param, incomplete):
+        return [CompletionItem("a:b", help="first")]
+
+    @click.command()
+    @click.option("--color", shell_complete=complete)
+    def cli(color):
+        pass
+
+    output = _shell_complete_output(runner, cli, "zsh", "gobble --color=a", 1)
+    assert output.splitlines() == ["plain", r"--color=a\:b", "first"]
+
+
+def test_option_value_after_equals_keeps_dir_and_file_types(runner):
+    """Only plain values get the option prefix, the shell completes paths."""
+
+    @click.command()
+    @click.option("--out", type=Path())
+    def cli(out):
+        pass
+
+    output = _shell_complete_output(runner, cli, "zsh", "gobble --out=sr", 1)
+    assert output.splitlines() == ["file", "sr", "_"]
+    output = _shell_complete_output(runner, cli, "bash", "gobble --out = sr", 3)
+    assert output.splitlines() == ["file,sr"]
+
+
+def test_get_completions_without_option_prefix():
+    """The base class still returns the values without the option name."""
+    assert _get_words(_equals_cli(), [], "--color=al") == ["always"]
+
+
+@pytest.mark.skipif(shutil.which("bash") is None, reason="requires Bash")
+@pytest.mark.parametrize(
+    ("current", "expect"),
+    [
+        ("two", ["two\\ words", "a=b", "x\\$y"]),
+        ("'two", ["two words", "a=b", "x$y"]),
+    ],
+)
+@pytest.mark.usefixtures("_patch_for_completion")
+def test_bash_script_quotes_inserted_values(runner, current, expect):
+    """Bash inserts a reply literally, so the script escapes spaces and other
+    special characters, unless the word is in quotes.
+    https://github.com/pallets/click/issues/2847
+    """
+    result = runner.invoke(
+        _equals_cli(), prog_name="gobble", env={"_GOBBLE_COMPLETE": "bash_source"}
+    )
+    script = (
+        f"{result.output}\n"
+        # Answer as the program would, without running it.
+        "env() { printf 'plain,two words\\nplain,a=b\\nplain,x$y\\n'; }\n"
+        f"COMP_WORDS=(gobble --color = {shlex.quote(current)}); COMP_CWORD=3\n"
+        "_gobble_completion gobble\n"
+        'printf "%s\\n" "${COMPREPLY[@]}"\n'
+    )
+    completed = subprocess.run(
+        [shutil.which("bash"), "--norc", "--noprofile", "-c", script],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    assert completed.stdout.splitlines() == expect
 
 
 def test_fish_format_completion_escapes_help():

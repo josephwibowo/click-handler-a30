@@ -106,12 +106,13 @@ _SOURCE_BASH = """\
 %(complete_func)s() {
     local IFS=$'\\n'
     local response
+    local quoted=${COMP_WORDS[COMP_CWORD]:0:1}
 
     response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD \
 %(complete_var)s=bash_complete $1)
 
     for completion in $response; do
-        IFS=',' read type value <<< "$completion"
+        IFS=',' read -r type value <<< "$completion"
 
         if [[ $type == 'dir' ]]; then
             COMPREPLY=()
@@ -120,7 +121,14 @@ _SOURCE_BASH = """\
             COMPREPLY=()
             compopt -o default
         elif [[ $type == 'plain' ]]; then
-            COMPREPLY+=($value)
+            # Bash inserts a reply literally. Unless the word is already in
+            # quotes, escape spaces and other special characters so the
+            # value stays one argument.
+            if [[ $quoted != [\\'\\"] ]]; then
+                printf -v value '%%q' "$value"
+            fi
+
+            COMPREPLY+=("$value")
         fi
     done
 
@@ -429,7 +437,17 @@ class BashComplete(ShellComplete):
         self._check_version()
         return super().source()
 
+    _typed_word: tuple[str, str] | None = None
+    """The incomplete word from :meth:`get_completion_args`, and its start
+    that Bash keeps when it inserts a completion.
+    """
+
     def get_completion_args(self) -> tuple[list[str], str]:
+        """
+        .. versionchanged:: 8.6.0
+            An option name split from its value at an ``=`` word break is
+            joined back together.
+        """
         cwords = split_arg_string(os.environ["COMP_WORDS"])
         cword = int(os.environ["COMP_CWORD"])
         args = cwords[1:cword]
@@ -439,7 +457,40 @@ class BashComplete(ShellComplete):
         except IndexError:
             incomplete = ""
 
+        # Bash replaces only the current word, and not an "=" word break
+        # that the cursor directly follows.
+        replaced = "" if incomplete == "=" else incomplete
+        *args, incomplete = _join_option_values([*args, incomplete])
+        self._typed_word = (incomplete, incomplete[: len(incomplete) - len(replaced)])
         return args, incomplete
+
+    def get_completions(
+        self, args: list[str], incomplete: str
+    ) -> list[CompletionItem[str]]:
+        """
+        .. versionchanged:: 8.6.0
+            The values for an option given as ``--name=value`` include the
+            part of the word that Bash doesn't replace, such as ``--name=``
+            if ``COMP_WORDBREAKS`` doesn't contain ``=``.
+        """
+        items = _get_completions_keeping_option(self, args, incomplete)
+
+        if self._typed_word is None or self._typed_word[0] != incomplete:
+            return items
+
+        kept = self._typed_word[1]
+
+        if not kept:
+            return items
+
+        return [
+            _with_value(item, item.value[len(kept) :])
+            if item.type == "plain"
+            and isinstance(item.value, str)
+            and item.value.startswith(kept)
+            else item
+            for item in items
+        ]
 
     def format_completion(self, item: CompletionItem[t.Any]) -> str:
         return f"{item.type},{item.value}"
@@ -462,6 +513,16 @@ class ZshComplete(ShellComplete):
             incomplete = ""
 
         return args, incomplete
+
+    def get_completions(
+        self, args: list[str], incomplete: str
+    ) -> list[CompletionItem[str]]:
+        """
+        .. versionchanged:: 8.6.0
+            The values for an option given as ``--name=value`` include the
+            ``--name=`` prefix, as Zsh replaces the whole word.
+        """
+        return _get_completions_keeping_option(self, args, incomplete)
 
     def format_completion(self, item: CompletionItem[str]) -> str:
         help_ = item.help or "_"
@@ -799,3 +860,70 @@ def _resolve_incomplete(
     # There were no unparsed arguments, the command may be a group that
     # will provide command name completions.
     return ctx.command, incomplete
+
+
+def _join_option_values(words: list[str]) -> list[str]:
+    """Join an option name and its value that Bash split into separate words.
+
+    Bash splits the words it passes to completion at the characters in
+    ``COMP_WORDBREAKS``, which contains ``=`` by default, so ``--name=value``
+    arrives as the three words ``--name``, ``=``, and ``value``. Join an ``=``
+    word that follows an option name back onto it, along with the value after
+    it. Values containing ``=`` are split again, so they are joined as well.
+
+    :param words: Words after the program name, including the incomplete
+        word last.
+    """
+    out: list[str] = []
+    joining = False
+
+    for word in words:
+        if joining:
+            out[-1] += word
+            joining = word == "="
+        elif word == "=" and out and _looks_like_option(out[-1]):
+            out[-1] += word
+            joining = True
+        else:
+            out.append(word)
+
+    return out
+
+
+def _looks_like_option(word: str) -> bool:
+    """Check if a word looks like an option name, before the context that
+    knows the actual option prefixes is resolved.
+    """
+    return len(word) > 1 and not word[0].isalnum() and word[0] != "="
+
+
+def _with_value(item: CompletionItem[t.Any], value: str) -> CompletionItem[str]:
+    """Copy a completion item with a different value."""
+    return CompletionItem(value, type=item.type, help=item.help, **item._info)
+
+
+def _get_completions_keeping_option(
+    comp: ShellComplete, args: list[str], incomplete: str
+) -> list[CompletionItem[str]]:
+    """Get completions like :meth:`ShellComplete.get_completions`, but if the
+    incomplete word is an option name with an attached value, such as
+    ``--name=val``, prefix each value completion with ``--name=``. A shell that
+    replaces the whole incomplete word with the completion then keeps the
+    option name.
+
+    :param comp: The shell completion instance.
+    :param args: List of complete args before the incomplete value.
+    :param incomplete: Value being completed. May be empty.
+    """
+    ctx = _resolve_context(comp.cli, comp.ctx_args, comp.prog_name, args)
+    obj, value = _resolve_incomplete(ctx, args, incomplete)
+    items = obj.shell_complete(ctx, value)
+    name, sep, _ = incomplete.partition("=")
+
+    if not sep or not isinstance(obj, Option) or name not in obj.opts:
+        return items
+
+    return [
+        _with_value(item, f"{name}={item.value}") if item.type == "plain" else item
+        for item in items
+    ]
