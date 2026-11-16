@@ -43,6 +43,10 @@ Unreleased
 - {class}`Parameter` accepts a new `help` argument and {class}`Option` and {class}`Argument`
   inherits it. {meth}`Parameter.to_info_dict` now reports `help` for every kind of parameter.
   {pr}`3861`
+- Shell completion no longer calls a callable `default` or a callable
+  {attr}`Context.default_map` value while resolving the context. The parameter's
+  value is `None` during completion. Literal defaults and values given on the
+  command line are still available. {issue}`2614`
 - A command's short help no longer stops at an abbreviation such as `vs.` or `e.g.`
   inside the first sentence. A period ends the sentence only when it closes the text
   or the next word does not start in lowercase. {pr}`3865`

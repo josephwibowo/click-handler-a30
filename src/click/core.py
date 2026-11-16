@@ -809,7 +809,7 @@ class Context:
 
     @t.overload
     def lookup_default(
-        self, name: str, call: t.Literal[False] = ...
+        self, name: str, call: bool = ...
     ) -> t.Any | t.Callable[[], t.Any] | None: ...
 
     def lookup_default(self, name: str, call: bool = True) -> t.Any | None:
@@ -2688,8 +2688,16 @@ class Parameter(ABC):
 
         If no value is found, an internal sentinel value is returned.
 
+        During resilient parsing, such as when resolving the context for shell
+        completion, a callable default is not called, because it may be slow or have
+        side effects. The value is treated as missing instead. Literal defaults are
+        still used.
+
         :meta private:
         """
+        # Don't call callable defaults when parsing resiliently, for example during
+        # shell completion. https://github.com/pallets/click/issues/2614
+        call_default = not ctx.resilient_parsing
         # Collect from the parse the value passed by the user to the CLI.
         value = opts.get(self.name, UNSET)
         # If the value is set, it means it was sourced from the command line by the
@@ -2707,8 +2715,12 @@ class Parameter(ABC):
                 source = ParameterSource.ENVIRONMENT
 
         if value is UNSET:
-            default_map_value = ctx.lookup_default(self.name)
+            default_map_value = ctx.lookup_default(self.name, call=call_default)
             if default_map_value is not None or ctx._default_map_has(self.name):
+                if not call_default and callable(default_map_value):
+                    # The default map provides the value, but it is not called.
+                    return UNSET, ParameterSource.DEFAULT_MAP
+
                 value = default_map_value
                 source = ParameterSource.DEFAULT_MAP
 
@@ -2718,7 +2730,17 @@ class Parameter(ABC):
                     value = self.type.split_envvar_value(value)
 
         if value is UNSET:
-            default_value = self.get_default(ctx)
+            default_value = self.get_default(ctx, call=call_default)
+
+            # Only the parameter's own callable default would be called. A value
+            # derived from it, such as an option's flag value, is a literal.
+            if (
+                not call_default
+                and callable(default_value)
+                and default_value is self.default
+            ):
+                default_value = UNSET
+
             if default_value is not UNSET:
                 value = default_value
                 source = ParameterSource.DEFAULT
