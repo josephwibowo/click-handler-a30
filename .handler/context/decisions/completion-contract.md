@@ -38,8 +38,8 @@ sabotage a candidate.
 Source/test/docs scope is the approved named paths. Every implementation admission
 must retain the approved negative protected-path exclusions in its writable-path
 expression. Policy, CI, protected acceptance, lockfile and package configuration
-stay operator-owned. Protected acceptance lives separately in acceptance/ because
-both contributions are required to pass it.
+stay operator-owned. Objective acceptance is held out of the
+repository (D-0107): project policy pins only its manifest.
 
 The operator must retain local evidence for the exact applicable candidate on
 Ubuntu 24.04 amd64: the upstream `tests/` suite on Python 3.10 and 3.13, and on

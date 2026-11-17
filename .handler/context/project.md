@@ -26,6 +26,12 @@ objective execution. No archived target, old namespace, draft declaration or dat
 readback grants objective authority. Image, SDK/CLI, interpreter and permission
 pins remain required contracts, not proof of current runtime readiness.
 
+Objective acceptance is held out (SPEC §12.1, D-0107). The `click-held-out-*` controls
+run files the operator installed at `/opt/handler-held-out/click-equals-v1` in the native
+container; no native role can read them, and this policy pins only their manifest. The
+upstream suite and lint stay visible and runnable. Their reports are retained like any
+check output.
+
 The orchestrator chooses bounded actions and working-plan revisions. Investigator
 turns observe without candidate writes; assessor turns independently judge an exact
 retained submission. Only the tier-selected implementer may mutate the admitted
@@ -149,18 +155,64 @@ review and merge remain operator actions.
       {
         "argv": [
           "/usr/local/share/handler-click-checks/bin/python",
-          "ci/check_objective.py",
+          "/handler-held-out/check_held_out.py",
           "defaults"
         ],
         "artifacts": [
-          "reports/defaults.xml"
+          "reports/held-out-defaults.xml"
         ],
         "expects": "junit_xml",
+        "held_out": {
+          "files": [
+            {
+              "path": "acceptance/__init__.py",
+              "mode": "100644",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "byte_size": 0
+            },
+            {
+              "path": "acceptance/shell_probe.py",
+              "mode": "100644",
+              "sha256": "48f686285d8452989863a5464789771473a2e3f1e287fde54614fd316cdfec30",
+              "byte_size": 6062
+            },
+            {
+              "path": "acceptance/test_completion_defaults.py",
+              "mode": "100644",
+              "sha256": "8877a0f1fe92e8d334c767f5244730fba14c114aa02a0ea0307b582f8a00990e",
+              "byte_size": 4486
+            },
+            {
+              "path": "acceptance/test_equals_shells.py",
+              "mode": "100644",
+              "sha256": "ef97e21864b81cd67086d3714a85d0bce71e114e168de5af0b3bfa79459281db",
+              "byte_size": 4526
+            },
+            {
+              "path": "acceptance/test_negative_inputs.py",
+              "mode": "100644",
+              "sha256": "973ecf0960d50adc8653ae595c0e862e3e89b241d6f17b6411aec8686be3ef59",
+              "byte_size": 1145
+            },
+            {
+              "path": "check_held_out.py",
+              "mode": "100644",
+              "sha256": "6b67cca7f0af4713c9ba9dcc97b0c33befc2cba26dd26d267c11c65b8a1121d5",
+              "byte_size": 2632
+            },
+            {
+              "path": "pytest.ini",
+              "mode": "100644",
+              "sha256": "aaabed120d2fb059160bb38bf8843dc0bbb6abca5f013dffb5228bfffb9a3404",
+              "byte_size": 39
+            }
+          ],
+          "root": "/opt/handler-held-out/click-equals-v1"
+        },
         "working_directory": ""
       }
     ],
-    "name": "click-defaults",
-    "profile_id": "61b3300a3521fb24b721f61b313c9e26363b923c3a594dca4b2563a8a564f09e"
+    "name": "click-held-out-defaults"
   }
 }
 ```
@@ -184,18 +236,64 @@ review and merge remain operator actions.
       {
         "argv": [
           "/usr/local/share/handler-click-checks/bin/python",
-          "ci/check_objective.py",
+          "/handler-held-out/check_held_out.py",
           "equals"
         ],
         "artifacts": [
-          "reports/equals.xml"
+          "reports/held-out-equals.xml"
         ],
         "expects": "junit_xml",
+        "held_out": {
+          "files": [
+            {
+              "path": "acceptance/__init__.py",
+              "mode": "100644",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "byte_size": 0
+            },
+            {
+              "path": "acceptance/shell_probe.py",
+              "mode": "100644",
+              "sha256": "48f686285d8452989863a5464789771473a2e3f1e287fde54614fd316cdfec30",
+              "byte_size": 6062
+            },
+            {
+              "path": "acceptance/test_completion_defaults.py",
+              "mode": "100644",
+              "sha256": "8877a0f1fe92e8d334c767f5244730fba14c114aa02a0ea0307b582f8a00990e",
+              "byte_size": 4486
+            },
+            {
+              "path": "acceptance/test_equals_shells.py",
+              "mode": "100644",
+              "sha256": "ef97e21864b81cd67086d3714a85d0bce71e114e168de5af0b3bfa79459281db",
+              "byte_size": 4526
+            },
+            {
+              "path": "acceptance/test_negative_inputs.py",
+              "mode": "100644",
+              "sha256": "973ecf0960d50adc8653ae595c0e862e3e89b241d6f17b6411aec8686be3ef59",
+              "byte_size": 1145
+            },
+            {
+              "path": "check_held_out.py",
+              "mode": "100644",
+              "sha256": "6b67cca7f0af4713c9ba9dcc97b0c33befc2cba26dd26d267c11c65b8a1121d5",
+              "byte_size": 2632
+            },
+            {
+              "path": "pytest.ini",
+              "mode": "100644",
+              "sha256": "aaabed120d2fb059160bb38bf8843dc0bbb6abca5f013dffb5228bfffb9a3404",
+              "byte_size": 39
+            }
+          ],
+          "root": "/opt/handler-held-out/click-equals-v1"
+        },
         "working_directory": ""
       }
     ],
-    "name": "click-equals",
-    "profile_id": "d7672df0c6023c5e4fa5b38a13bd7c1c6d3580b72d5a33bc7313a1bd96873b7c"
+    "name": "click-held-out-equals"
   }
 }
 ```
@@ -219,88 +317,64 @@ review and merge remain operator actions.
       {
         "argv": [
           "/usr/local/share/handler-click-checks/bin/python",
-          "ci/check_objective.py",
-          "integrated"
-        ],
-        "artifacts": [
-          "reports/integrated.xml"
-        ],
-        "expects": "junit_xml",
-        "working_directory": ""
-      }
-    ],
-    "name": "click-composed-feature",
-    "profile_id": "6b006d908c1352131d933014f51d39c0a77c97634634b47f66c6db56ca277552"
-  }
-}
-```
-
-```handler:surface
-{
-  "globs": [
-    "src/click/core.py",
-    "src/click/shell_completion.py",
-    "tests/test_shell_completion.py",
-    "tests/test_defaults.py",
-    "tests/test_context.py",
-    "tests/test_parser.py",
-    "docs/shell-completion.md",
-    "CHANGES.md",
-    "tests/handler_regressions/*.json"
-  ],
-  "level": "standard",
-  "profile": {
-    "commands": [
-      {
-        "argv": [
-          "/usr/local/share/handler-click-checks/bin/python",
-          "ci/check_objective.py",
-          "integrated"
-        ],
-        "artifacts": [
-          "reports/integrated.xml"
-        ],
-        "expects": "junit_xml",
-        "working_directory": ""
-      }
-    ],
-    "name": "click-integrated",
-    "profile_id": "9661a375018630436226bc0754814e37d03249086a68ed04a2f18164047dbf8f"
-  }
-}
-```
-
-```handler:surface
-{
-  "globs": [
-    "src/click/core.py",
-    "src/click/shell_completion.py",
-    "tests/test_shell_completion.py",
-    "tests/test_defaults.py",
-    "tests/test_context.py",
-    "tests/test_parser.py",
-    "docs/shell-completion.md",
-    "CHANGES.md",
-    "tests/handler_regressions/*.json"
-  ],
-  "level": "standard",
-  "profile": {
-    "commands": [
-      {
-        "argv": [
-          "/usr/local/share/handler-click-checks/bin/python",
-          "ci/check_objective.py",
+          "/handler-held-out/check_held_out.py",
           "negative"
         ],
         "artifacts": [
-          "reports/negative.xml"
+          "reports/held-out-negative.xml"
         ],
         "expects": "junit_xml",
+        "held_out": {
+          "files": [
+            {
+              "path": "acceptance/__init__.py",
+              "mode": "100644",
+              "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+              "byte_size": 0
+            },
+            {
+              "path": "acceptance/shell_probe.py",
+              "mode": "100644",
+              "sha256": "48f686285d8452989863a5464789771473a2e3f1e287fde54614fd316cdfec30",
+              "byte_size": 6062
+            },
+            {
+              "path": "acceptance/test_completion_defaults.py",
+              "mode": "100644",
+              "sha256": "8877a0f1fe92e8d334c767f5244730fba14c114aa02a0ea0307b582f8a00990e",
+              "byte_size": 4486
+            },
+            {
+              "path": "acceptance/test_equals_shells.py",
+              "mode": "100644",
+              "sha256": "ef97e21864b81cd67086d3714a85d0bce71e114e168de5af0b3bfa79459281db",
+              "byte_size": 4526
+            },
+            {
+              "path": "acceptance/test_negative_inputs.py",
+              "mode": "100644",
+              "sha256": "973ecf0960d50adc8653ae595c0e862e3e89b241d6f17b6411aec8686be3ef59",
+              "byte_size": 1145
+            },
+            {
+              "path": "check_held_out.py",
+              "mode": "100644",
+              "sha256": "6b67cca7f0af4713c9ba9dcc97b0c33befc2cba26dd26d267c11c65b8a1121d5",
+              "byte_size": 2632
+            },
+            {
+              "path": "pytest.ini",
+              "mode": "100644",
+              "sha256": "aaabed120d2fb059160bb38bf8843dc0bbb6abca5f013dffb5228bfffb9a3404",
+              "byte_size": 39
+            }
+          ],
+          "root": "/opt/handler-held-out/click-equals-v1"
+        },
         "working_directory": ""
       }
     ],
-    "name": "click-negative",
-    "profile_id": "d025ec624e92f0aecfc93f3b56d93e046e8ced666f986ad5fc0ba12ca32f52a1"
+    "name": "click-held-out-negative"
   }
 }
 ```
