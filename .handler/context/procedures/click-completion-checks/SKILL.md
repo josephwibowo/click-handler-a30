@@ -19,10 +19,12 @@ host pins mandatory controls from project policy at approval. Run the local chec
 for an implementation slice and retain fresh protected composed observations for
 independent submission assessment:
 
-- `/usr/local/share/handler-click-checks/bin/python ci/check_objective.py defaults`: callable/default-map behavior and controls.
-- `/usr/local/share/handler-click-checks/bin/python ci/check_objective.py equals`: word-break/attached equals completion.
-- `/usr/local/share/handler-click-checks/bin/python ci/check_objective.py integrated`: whole-objective independent matrix.
-- `/usr/local/share/handler-click-checks/bin/python ci/check_objective.py negative`: protected invalid-input and ordinary-invocation controls.
+- The held-out controls `click-held-out-defaults`, `click-held-out-equals` and
+  `click-held-out-negative` (argv `/usr/local/share/handler-click-checks/bin/python
+  /handler-held-out/check_held_out.py defaults|equals|negative`, with the exact `held_out`
+  manifest from project policy). Their files are not in this repository and no native role
+  can read them; they run only as Handler checks, judged in real Bash and Zsh by what the
+  completed command receives. Their reports show failing cases.
 - `/usr/local/share/handler-click-checks/bin/python ci/check_objective.py upstream-workflow`: full upstream default tests, excluding
   the 31,000 stress cases upstream normally deselects and the one case that reads
   the literal host /tmp, which the native sandbox hides.

@@ -265,10 +265,6 @@ def main(argv: Sequence[str] | None = None) -> int:
         "mode",
         choices=[
             "upstream-workflow",
-            "defaults",
-            "equals",
-            "integrated",
-            "negative",
             "lint",
         ],
     )
@@ -330,13 +326,6 @@ def main(argv: Sequence[str] | None = None) -> int:
             "tests/test_commands.py::test_other_command_invoke_with_defaults"
             "[opt_params12-/tmp]",
         ],
-        "defaults": ["acceptance/test_completion_defaults.py"],
-        "equals": [
-            "acceptance/test_completion_equals.py",
-            "acceptance/test_completion_integrated.py",
-        ],
-        "integrated": ["acceptance"],
-        "negative": ["acceptance/test_negative_inputs.py"],
     }[args.mode]
     command = [
         "-q",

@@ -2,7 +2,7 @@
 
 The source baseline is pallets/click at
 `2247b35ea1c47c727d7a06e51fa280e12a863ff6`. Both upstream issues remain unfixed
-in this bootstrap. The independent `acceptance/` matrix must fail there.
+in this bootstrap. Objective acceptance is now held out of the repository (D-0107).
 
 The following commands are mandatory local evidence for the applicable exact
 candidate. Run in Ubuntu 24.04 amd64, retaining environment and candidate identity,
