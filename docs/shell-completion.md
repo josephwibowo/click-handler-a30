@@ -27,7 +27,11 @@ $ repo clone --rev=ma<TAB>
 $ repo clone --rev=main
 ```
 
-If you saved the Bash completion script to a file, generate it again to get the escaping.
+A value in a word opened with a double or single quote is escaped for that quote instead. A value containing `=`, or a
+path, is completed in the same word form, such as `--env=FOO=b` or `--out=pa`. Like the parser, a short option is not
+split at `=`: the value of `-c=al` is `=al`, so it isn't completed as a value.
+
+If you saved the Bash or Zsh completion script to a file, generate it again to get the escaping and these word forms.
 
 ## Enabling Completion
 

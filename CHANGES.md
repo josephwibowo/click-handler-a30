@@ -52,6 +52,13 @@ Unreleased
   Zsh replaces the whole word. The Bash completion script escapes inserted
   values, so a value with spaces or other special characters is passed as one
   argument. {issue}`2847`
+- Bash and Zsh shell completion handle more option value word forms. Like the
+  parser, a short option such as `-c=al` is not split at `=`. The Bash script
+  passes `COMP_LINE` and `COMP_POINT`, so the words are split like the shell
+  splits them: a space after `--name=` completes the next argument, and a value
+  containing `=` given as `--name FOO=b` is completed. A reply is escaped for the
+  double or single quote the word was opened with. Zsh completes a path given as
+  `--name=path`. {issue}`2847`
 - A command's short help no longer stops at an abbreviation such as `vs.` or `e.g.`
   inside the first sentence. A period ends the sentence only when it closes the text
   or the next word does not start in lowercase. {pr}`3865`

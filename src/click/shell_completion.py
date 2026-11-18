@@ -13,6 +13,7 @@ from .core import Group
 from .core import Option
 from .core import Parameter
 from .core import ParameterSource
+from .parser import _split_opt
 from .utils import echo
 
 
@@ -107,8 +108,10 @@ _SOURCE_BASH = """\
     local IFS=$'\\n'
     local response
     local quoted=${COMP_WORDS[COMP_CWORD]:0:1}
+    local escaped char i
 
     response=$(env COMP_WORDS="${COMP_WORDS[*]}" COMP_CWORD=$COMP_CWORD \
+COMP_LINE="$COMP_LINE" COMP_POINT="$COMP_POINT" \
 %(complete_var)s=bash_complete $1)
 
     for completion in $response; do
@@ -121,10 +124,24 @@ _SOURCE_BASH = """\
             COMPREPLY=()
             compopt -o default
         elif [[ $type == 'plain' ]]; then
-            # Bash inserts a reply literally. Unless the word is already in
-            # quotes, escape spaces and other special characters so the
-            # value stays one argument.
-            if [[ $quoted != [\\'\\"] ]]; then
+            # Bash inserts a reply literally. Escape it for the quotes the
+            # word was opened with, or escape spaces and other special
+            # characters if it isn't quoted, so the value stays one argument.
+            if [[ $quoted == [\\'\\"] ]]; then
+                escaped=''
+
+                for (( i = 0; i < ${#value}; i++ )); do
+                    char=${value:i:1}
+
+                    case $quoted$char in
+                        "''") escaped+="'\\''" ;;
+                        '"\\'|'"$'|'"`'|'""') escaped+="\\\\$char" ;;
+                        *) escaped+=$char ;;
+                    esac
+                done
+
+                value=$escaped
+            else
                 printf -v value '%%q' "$value"
             fi
 
@@ -160,17 +177,24 @@ _SOURCE_ZSH = """\
     response=("${(@f)$(env COMP_WORDS="${words[*]}" COMP_CWORD=$((CURRENT-1)) \
 %(complete_var)s=zsh_complete %(prog_name)s)}")
 
-    for type key descr in ${response}; do
+    for type key descr in "${response[@]}"; do
         if [[ "$type" == "plain" ]]; then
             if [[ "$descr" == "_" ]]; then
                 completions+=("$key")
             else
                 completions_with_descriptions+=("$key":"$descr")
             fi
-        elif [[ "$type" == "dir" ]]; then
-            _path_files -/
-        elif [[ "$type" == "file" ]]; then
-            _path_files -f
+        elif [[ "$type" == "dir" || "$type" == "file" ]]; then
+            # A path given as --name=path is completed after the "=".
+            if [[ "$PREFIX" == ?*"=$key" ]]; then
+                compset -P 1 '*='
+            fi
+
+            if [[ "$type" == "dir" ]]; then
+                _path_files -/
+            else
+                _path_files -f
+            fi
         fi
     done
 
@@ -445,8 +469,10 @@ class BashComplete(ShellComplete):
     def get_completion_args(self) -> tuple[list[str], str]:
         """
         .. versionchanged:: 8.6.0
-            An option name split from its value at an ``=`` word break is
-            joined back together.
+            The words are split from ``COMP_LINE`` before ``COMP_POINT`` like
+            the shell splits them, if the script passes them. Otherwise, an
+            option name split from its value at an ``=`` word break is joined
+            back together.
         """
         cwords = split_arg_string(os.environ["COMP_WORDS"])
         cword = int(os.environ["COMP_CWORD"])
@@ -457,12 +483,49 @@ class BashComplete(ShellComplete):
         except IndexError:
             incomplete = ""
 
-        # Bash replaces only the current word, and not an "=" word break
-        # that the cursor directly follows.
-        replaced = "" if incomplete == "=" else incomplete
-        *args, incomplete = _join_option_values([*args, incomplete])
+        # Bash replaces only the current word, and not "=" or ":" word
+        # breaks that the cursor directly follows.
+        replaced = "" if incomplete and not incomplete.strip("=:") else incomplete
+        line_words = self._get_line_words(cwords, cword)
+
+        if line_words is not None and line_words[-1].endswith(replaced):
+            *args, incomplete = line_words
+        else:
+            *args, incomplete = _join_option_values([*args, incomplete])
+
         self._typed_word = (incomplete, incomplete[: len(incomplete) - len(replaced)])
         return args, incomplete
+
+    @staticmethod
+    def _get_line_words(cwords: list[str], cword: int) -> list[str] | None:
+        """Split ``COMP_LINE`` before ``COMP_POINT`` into the shell words after
+        the program name, the last being the incomplete word. Bash also splits
+        ``COMP_WORDS`` at the characters in ``COMP_WORDBREAKS``, such as ``=``
+        in a value, but the program receives the shell words.
+
+        Return ``None`` if the line wasn't passed, or doesn't have the same
+        text as ``COMP_WORDS``.
+
+        :param cwords: The split ``COMP_WORDS``.
+        :param cword: The index of the current word in ``COMP_WORDS``.
+        """
+        line = os.environ.get("COMP_LINE")
+        point = os.environ.get("COMP_POINT")
+
+        if line is None or point is None or not point.isdigit():
+            return None
+
+        index = int(point)
+
+        if index > len(line):
+            return None
+
+        words = _split_shell_words(line[:index])[1:]
+
+        if not words or "".join(words) != "".join(cwords[1 : cword + 1]):
+            return None
+
+        return words
 
     def get_completions(
         self, args: list[str], incomplete: str
@@ -829,12 +892,17 @@ def _resolve_incomplete(
     # Different shells treat an "=" between a long option name and
     # value differently. Might keep the value joined, return the "="
     # as a separate item, or return the split name and value. Always
-    # split and discard the "=" to make completion easier.
+    # split and discard the "=" to make completion easier. Like the
+    # parser, don't split a short option name, the value of "-c=al" is
+    # "=al".
     if incomplete == "=":
         incomplete = ""
     elif "=" in incomplete and _start_of_option(ctx, incomplete):
-        name, _, incomplete = incomplete.partition("=")
-        args.append(name)
+        name, _, value = incomplete.partition("=")
+
+        if not _is_short_option_name(name):
+            args.append(name)
+            incomplete = value
 
     # The "--" marker tells Click to stop treating values as options
     # even if they start with the option character. If it hasn't been
@@ -860,6 +928,70 @@ def _resolve_incomplete(
     # There were no unparsed arguments, the command may be a group that
     # will provide command name completions.
     return ctx.command, incomplete
+
+
+def _is_short_option_name(name: str) -> bool:
+    """Check if an option name is a short name like ``-c``, which the parser
+    never splits from an attached value at ``=``.
+    """
+    prefix, rest = _split_opt(name)
+    return len(prefix) == 1 and len(rest) == 1
+
+
+def _split_shell_words(line: str) -> list[str]:
+    """Split a command line into words with quotes and escapes removed, like
+    the shell does. The last word is the incomplete word, which is empty if
+    the line ends with whitespace. An unclosed quote or a trailing backslash
+    is ignored.
+
+    :param line: The command line up to the cursor.
+    """
+    words: list[str] = []
+    word: list[str] = []
+    in_word = False
+    quote = ""
+    chars = iter(line)
+
+    for char in chars:
+        if quote == "'":
+            if char == "'":
+                quote = ""
+            else:
+                word.append(char)
+        elif quote == '"':
+            if char == '"':
+                quote = ""
+            elif char == "\\":
+                escaped = next(chars, "")
+
+                if escaped not in '\\"$`\n':
+                    word.append(char)
+
+                if escaped != "\n":
+                    word.append(escaped)
+            else:
+                word.append(char)
+        elif char == "\\":
+            in_word = True
+            escaped = next(chars, "")
+
+            if escaped != "\n":
+                word.append(escaped)
+        elif char in " \t\n":
+            if in_word:
+                words.append("".join(word))
+                word = []
+                in_word = False
+        else:
+            in_word = True
+
+            if char in "'\"":
+                quote = char
+            else:
+                word.append(char)
+
+    words.append("".join(word))
+    return words
 
 
 def _join_option_values(words: list[str]) -> list[str]:
